@@ -2,13 +2,11 @@ import yagmail as yag
 import os
 
 
-def notify(send_to, body):
+def notify( body):
     '''Handle the actual sending an email. A pre-defined bot (login details
     in email_details.json) will send an email.
     Inputs:
     -------
-      send_to: str, list of str
-        The email (or list of emails) to send to
       body: str
         The main text of the email
     '''
@@ -29,6 +27,7 @@ def notify(send_to, body):
 
     send_from = details['user']
     pword = details['pass']
+    send_to = details['send_to']
 
     if send_from == "Bot email address":
         print("Please set up the bot email in {} to enable email reporting!".format(details_loc))

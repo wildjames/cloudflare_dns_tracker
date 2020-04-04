@@ -103,7 +103,6 @@ for record in records:
         if not put_payload['success']:
             print("Failed to update the record!!! I'll send an email.")
 
-            send_to = 'wild.james343@gmail.com'
             body = pformat(put_payload)
 
             notify(send_to, body)
