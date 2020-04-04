@@ -23,7 +23,7 @@ cred_file.close()
 cloudflare_endpoint = "https://api.cloudflare.com/client/v4"
 # I promise I'm me, guv
 headers = {
-    "Authorization": "Bearer {}".format(cred['zone_all']),
+    "Authorization": "Bearer {}".format(cred['zone']),
     "Content-Type": "application/json",
 }
 
@@ -46,7 +46,7 @@ else:
 
 
 # This is the zone I'm gonna target:
-zone_endpoint = cloudflare_endpoint + "/zones/{}".format(cred['wildjames.space'])
+zone_endpoint = cloudflare_endpoint + "/zones/{}".format(cred['domainID'])
 
 # Lets see what we have to work with here...
 dns_endpoint = zone_endpoint + "/dns_records"
