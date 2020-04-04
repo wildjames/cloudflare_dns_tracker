@@ -6,6 +6,17 @@ This is basic stuff, really (though the [cloudflare API](https://api.cloudflare.
 Literally just takes a DNS record, and does a PUT request to update it with the IP address of the computer running this script. 
 But, I figure that I'll want this again and I don't want to have to ssh into my server every damn time, so here it is.
 
+## DON'T FORGET TO SET UP THE CREDENTIALS
+
+you need two credentials files, stored as JSON.
+  - `credentials.json`: Cloudflare info
+    - `zone`: API Token
+    - `domainID`: The domain to update
+  - `email_credentials.json`: gmail account info (will send you an email if updating the records fails)
+    - `user`: email address to send from
+    - `pass`: password
+    - `send_to`: Who to notify
+
 ## A letter from you
 
 Dear Future James,
@@ -17,9 +28,6 @@ Here are some things that you used to know:
   - Authorisation token (this is the bit that says `Bearer: {}`) is the relevant API *token* from [the API subsection here](https://dash.cloudflare.com/profile)
   - The bit of the URL that has `/zones/{}` wants the ID key of the relevant website - you can find that on the domain management page on your cloudflare website. At time of writing, it's on the right, about halfway down.
   - In the `/dns_records/{}`, you're putting the ID for the specific *record* you want to edit. The API can report the IDs of all the records associated with the domain, so I loop through them all, checking if they want updating based on their type. This probably wont need changing, but would be trivial to alter and have it change records based on name or whatever.
-  - The `credentials.json` file hold the cloudflare creds, and wants these fields: `zone: <API token>, domainID: <ID key>`
-  - The `email_credentials.json` file holds the email sending bot info. I re-used MCMCfit.bot in mine. It wants `user: <address>, pass: <pass>`.
-
 
 Love,
 
