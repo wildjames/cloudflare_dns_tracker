@@ -1,8 +1,8 @@
-import requests
 import json
-from pprint import pprint, pformat
-from notify import notify
+from pprint import pformat, pprint
 
+import requests
+from notify import notify
 
 whatismyip_url = "https://api.ipify.org?format=json"
 
@@ -108,6 +108,3 @@ for record in records:
             notify(send_to, body)
 
     print("\n=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n")
-
-
-
