@@ -1,5 +1,6 @@
 import yagmail as yag
 import os
+import json
 
 
 def notify( body):
