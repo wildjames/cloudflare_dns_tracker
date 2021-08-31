@@ -109,6 +109,6 @@ for record in records:
 
             body = pformat(put_payload)
 
-            notify(send_to, body)
+            notify(body)
 
     print("\n=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n")
