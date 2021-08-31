@@ -64,7 +64,11 @@ update_dns_endpoint = dns_endpoint + "/{}"
 
 # Humans are bad at reading raw data. Make it nice for the poor things.
 print("DNS Records:")
-records = payload['result']
+try:
+    records = payload['result']
+except KeyError:
+    print("Payload doesn't have the result key! Here's a dump:")
+    print(payload)
 for record in records:
     print("Record:")
     print("    ID:       {}".format(record['id']))
