@@ -3,6 +3,7 @@ from pprint import pformat, pprint
 
 import requests
 from notify import notify
+from os import path
 
 whatismyip_url = "https://api.ipify.org?format=json"
 
@@ -14,7 +15,8 @@ print("My IP is {}\n\n".format(my_IP))
 
 
 # This is where I store my SENSITIVE PARTS
-cred_file = open("credentials.json", 'r')
+credpath = path.join(path.split(__file__)[0], 'credentials.json')
+cred_file = open(credpath, 'r')
 cred = json.load(cred_file)
 cred_file.close()
 
