@@ -1,14 +1,41 @@
-import json
 from pprint import pformat, pprint
 
+import yagmail as yag
 import requests
-from notify import notify
-from os import path
+import os
 from time import sleep
 
 whatismyip_url = "https://api.ipify.org?format=json"
 sleep_time = 60 * 60 * 1 # seconds
 
+cloudflare_zone = os.environ.get('CLOUDFLARE_ZONE')
+cloudflare_domain_id = os.environ.get('CLOUDFLARE_DOMAIN_ID')
+gmail_user = os.environ.get('GMAIL_USER')
+gmail_pass = os.environ.get('GMAIL_PASS')
+gmail_send_to = os.environ.get('GMAIL_SEND_TO')
+
+
+def notify( body):
+    '''Handle the actual sending an email. A pre-defined bot (login details
+    in email_details.json) will send an email.
+    Inputs:
+    -------
+      body: str
+        The main text of the email
+    '''
+    print("I fucked up setting the new IP address. Sending an alert email")
+
+    subject = "ERROR IN UPDATING CLOUDFLARE CREDENTIALS"
+
+    # Construct the email contents
+    contents = [body]
+
+    # Send with yagmail
+    client = yag.SMTP(gmail_user, gmail_pass)
+    client.send(gmail_send_to, subject, contents)
+    print("Email sent!")
+
+    return
 
 def main():
     response = requests.get(whatismyip_url)
@@ -17,19 +44,11 @@ def main():
 
     print("My IP is {}\n\n".format(my_IP))
 
-
-    # This is where I store my SENSITIVE PARTS
-    credpath = path.join(path.split(__file__)[0], 'credentials.json')
-    cred_file = open(credpath, 'r')
-    cred = json.load(cred_file)
-    cred_file.close()
-
-
     # Documentation: https://api.cloudflare.com/
     cloudflare_endpoint = "https://api.cloudflare.com/client/v4"
     # I promise I'm me, guv
     headers = {
-        "Authorization": "Bearer {}".format(cred['zone']),
+        "Authorization": "Bearer {}".format(cloudflare_zone),
         "Content-Type": "application/json",
     }
 
@@ -52,7 +71,7 @@ def main():
 
 
     # This is the zone I'm gonna target:
-    zone_endpoint = cloudflare_endpoint + "/zones/{}".format(cred['domainID'])
+    zone_endpoint = cloudflare_endpoint + "/zones/{}".format(cloudflare_domain_id)
 
     # Lets see what we have to work with here...
     dns_endpoint = zone_endpoint + "/dns_records"

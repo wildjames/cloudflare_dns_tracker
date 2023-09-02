@@ -1,46 +1,47 @@
-# cloudflare_dns_tracker
-Update the DNS records of a cloudflare website programmatically, for dynamic IPs. 
-I looked about and the tools that exist don't seem to work for my use-case, which bummed me out. This was written for the v4 cloudflare REST API.
+# Cloudflare DNS Tracker
 
-This is basic stuff, really (though the [cloudflare API](https://api.cloudflare.com) documentation was an arse to understand, IMO).
-Literally just takes a DNS record, and does a PUT request to update it with the IP address of the computer running this script. 
-But, I figure that I'll want this again and I don't want to have to ssh into my server every damn time, so here it is.
+This utility updates the DNS records of a Cloudflare website programmatically to handle dynamic IPs. It's designed to work with Cloudflare's v4 REST API. The script performs a PUT request to update the DNS record with the IP address of the machine running the script.
 
-## DON'T FORGET TO SET UP THE CREDENTIALS
+## Prerequisites
 
-you need two credentials files, stored as JSON.
-  - `credentials.json`: Cloudflare info
-    - `zone`: API Token
-    - `domainID`: The domain to update
-  - `email_credentials.json`: gmail account info (will send you an email if updating the records fails)
-    - `user`: email address to send from
-    - `pass`: password
-    - `send_to`: Who to notify
+### Credentials Setup
 
-## Docker
+You need to create two JSON files for storing credentials:
 
-I containerised it for my unraid server. Now, to run the container,
-```
+1. **`credentials.json`**: Contains Cloudflare information.
+    - `zone`: Your Cloudflare API Token.
+    - `domainID`: The domain you wish to update.
+
+2. **`email_credentials.json`**: Contains Gmail account information for sending notifications.
+    - `user`: Email address to send from.
+    - `pass`: Password for the email account.
+    - `send_to`: Recipient email address for notifications.
+
+## Docker Deployment
+
+This utility is containerized for easy deployment on an unRAID server. To build and run the Docker container, execute the following commands:
+
+```bash
 docker build --tag cloudflare_ddns .
 docker run cloudflare_ddns
 ```
-The dockerfile runs the update script every hour
 
+The Docker container is configured to run the update script every hour.
 
-## A letter from you
+---
+
+## Notes to Future Self
 
 Dear Future James,
 
-I know you're an idiot, and you're gonna forget how this script works. 
-One day it will break, and you're gonna have to learn this all again. Neither of us want that.
+I know you might forget how this works, so here's a quick refresher:
 
-Here are some things that you used to know:
-  - Authorisation token (this is the bit that says `Bearer: {}`, and is `zone` in the JSON file) is the relevant API *token* from [the API subsection here](https://dash.cloudflare.com/profile)
-  - The bit of the URL that has `/zones/{}` (AKA domainID) wants the ID key of the relevant website - you can find that on the domain management page on your cloudflare website. At time of writing, it's on the right, about halfway down.
-  - In the `/dns_records/{}`, you're putting the ID for the specific *record* you want to edit. The API can report the IDs of all the records associated with the domain, so I loop through them all, checking if they want updating based on their type. This probably wont need changing, but would be trivial to alter and have it change records based on name or whatever.
+- The `Authorization` token in the `credentials.json` (labeled as `Bearer: {}`) is your Cloudflare API Token. You can find this in your [Cloudflare profile under the API section](https://dash.cloudflare.com/profile).
+  
+- The `domainID` is the ID of the website you want to manage. You can find this on the domain management page of your Cloudflare dashboard. Look for it on the right side, about halfway down the page.
 
-Love,
+- The script iterates through all DNS records associated with the domain, updating those that need it based on their type. If you ever need to change this behavior, it should be straightforward to modify the script to update records based on other criteria like name.
 
-Past James 
+Best wishes,
 
-(xoxox)
+Past James
