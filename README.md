@@ -17,6 +17,16 @@ you need two credentials files, stored as JSON.
     - `pass`: password
     - `send_to`: Who to notify
 
+## Docker
+
+I containerised it for my unraid server. Now, to run the container,
+```
+docker build --tag cloudflare_ddns .
+docker run cloudflare_ddns
+```
+The dockerfile runs the update script every hour
+
+
 ## A letter from you
 
 Dear Future James,

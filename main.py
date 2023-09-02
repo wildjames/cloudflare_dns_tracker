@@ -4,113 +4,124 @@ from pprint import pformat, pprint
 import requests
 from notify import notify
 from os import path
+from time import sleep
 
 whatismyip_url = "https://api.ipify.org?format=json"
-
-response = requests.get(whatismyip_url)
-payload = response.json()
-my_IP = payload['ip']
-
-print("My IP is {}\n\n".format(my_IP))
+sleep_time = 60 * 60 * 1 # seconds
 
 
-# This is where I store my SENSITIVE PARTS
-credpath = path.join(path.split(__file__)[0], 'credentials.json')
-cred_file = open(credpath, 'r')
-cred = json.load(cred_file)
-cred_file.close()
+def main():
+    response = requests.get(whatismyip_url)
+    payload = response.json()
+    my_IP = payload['ip']
+
+    print("My IP is {}\n\n".format(my_IP))
 
 
-# Documentation: https://api.cloudflare.com/
-cloudflare_endpoint = "https://api.cloudflare.com/client/v4"
-# I promise I'm me, guv
-headers = {
-    "Authorization": "Bearer {}".format(cred['zone']),
-    "Content-Type": "application/json",
-}
+    # This is where I store my SENSITIVE PARTS
+    credpath = path.join(path.split(__file__)[0], 'credentials.json')
+    cred_file = open(credpath, 'r')
+    cred = json.load(cred_file)
+    cred_file.close()
 
 
-# Test communicating with the server
-verify_endpoint = cloudflare_endpoint + "/user/tokens/verify"
-response = requests.get(verify_endpoint, headers=headers)
-print("GETting with these headers:")
-pprint(headers)
-print("Recieved this response:")
-pprint(response)
-pprint(response.json())
-
-payload = response.json()
-if payload['success']:
-    print("\nSuccess!\n\n")
-else:
-    print("Verification FAILED!!")
-    exit()
+    # Documentation: https://api.cloudflare.com/
+    cloudflare_endpoint = "https://api.cloudflare.com/client/v4"
+    # I promise I'm me, guv
+    headers = {
+        "Authorization": "Bearer {}".format(cred['zone']),
+        "Content-Type": "application/json",
+    }
 
 
-# This is the zone I'm gonna target:
-zone_endpoint = cloudflare_endpoint + "/zones/{}".format(cred['domainID'])
+    # Test communicating with the server
+    verify_endpoint = cloudflare_endpoint + "/user/tokens/verify"
+    response = requests.get(verify_endpoint, headers=headers)
+    print("GETting with these headers:")
+    pprint(headers)
+    print("Recieved this response:")
+    pprint(response)
+    pprint(response.json())
 
-# Lets see what we have to work with here...
-dns_endpoint = zone_endpoint + "/dns_records"
+    payload = response.json()
+    if payload['success']:
+        print("\nSuccess!\n\n")
+    else:
+        print("Verification FAILED!!")
+        exit()
 
-resp = requests.get(dns_endpoint, headers=headers)
-payload = resp.json()
 
-# I only actually want to update the IP for  certain record types.
-# This is a list of those types:
-types_to_update = ['A']
+    # This is the zone I'm gonna target:
+    zone_endpoint = cloudflare_endpoint + "/zones/{}".format(cred['domainID'])
 
-# To update a zone:
-#   PUT zones/:zone_identifier/dns_records/:identifier
-update_dns_endpoint = dns_endpoint + "/{}"
+    # Lets see what we have to work with here...
+    dns_endpoint = zone_endpoint + "/dns_records"
 
-# Humans are bad at reading raw data. Make it nice for the poor things.
-print("DNS Records:")
-try:
-    records = payload['result']
-except KeyError:
-    print("Payload doesn't have the result key! Here's a dump:")
-    print(payload)
-for record in records:
-    print("Record:")
-    print("    ID:       {}".format(record['id']))
-    print("    Name:     {}".format(record['name']))
-    print("    Type:     {}".format(record['type']))
-    print("    Content:  {}".format(record['content']))
-    print("    Proxied?  {}".format(record['proxied']))
-    print("\n")
+    resp = requests.get(dns_endpoint, headers=headers)
+    payload = resp.json()
 
-    if record['type'] in types_to_update:
-        print("--> I need to alter this record to point to {}".format(my_IP))
-        update_dns_endpoint = dns_endpoint + "/{}".format(record['id'])
-        print(update_dns_endpoint)
+    # I only actually want to update the IP for  certain record types.
+    # This is a list of those types:
+    types_to_update = ['A']
 
-        package = {
-            "type": record['type'],
-            "name": record['name'],
-            "content": my_IP,
-            "ttl": 1,
-            "proxied": record['proxied']
-        }
-        print("\nData is now:")
-        pprint(package)
+    # To update a zone:
+    #   PUT zones/:zone_identifier/dns_records/:identifier
+    update_dns_endpoint = dns_endpoint + "/{}"
 
-        # PUT the data
-        put_resp = requests.put(
-            update_dns_endpoint,
-            json=package,
-            headers=headers,
-        )
+    # Humans are bad at reading raw data. Make it nice for the poor things.
+    print("DNS Records:")
+    try:
+        records = payload['result']
+    except KeyError:
+        print("Payload doesn't have the result key! Here's a dump:")
+        print(payload)
+    for record in records:
+        print("Record:")
+        print("    ID:       {}".format(record['id']))
+        print("    Name:     {}".format(record['name']))
+        print("    Type:     {}".format(record['type']))
+        print("    Content:  {}".format(record['content']))
+        print("    Proxied?  {}".format(record['proxied']))
+        print("\n")
 
-        print("\nResponses:")
-        print(put_resp)
-        put_payload = put_resp.json()
-        pprint(put_payload)
-        if not put_payload['success']:
-            print("Failed to update the record!!! I'll send an email.")
+        if record['type'] in types_to_update:
+            print("--> I need to alter this record to point to {}".format(my_IP))
+            update_dns_endpoint = dns_endpoint + "/{}".format(record['id'])
+            print(update_dns_endpoint)
 
-            body = pformat(put_payload)
+            package = {
+                "type": record['type'],
+                "name": record['name'],
+                "content": my_IP,
+                "ttl": 1,
+                "proxied": record['proxied']
+            }
+            print("\nData is now:")
+            pprint(package)
 
-            notify(body)
+            # PUT the data
+            put_resp = requests.put(
+                update_dns_endpoint,
+                json=package,
+                headers=headers,
+            )
 
-    print("\n=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n")
+            print("\nResponses:")
+            print(put_resp)
+            put_payload = put_resp.json()
+            pprint(put_payload)
+            if not put_payload['success']:
+                print("Failed to update the record!!! I'll send an email.")
+
+                body = pformat(put_payload)
+
+                notify(body)
+
+        print("\n=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n")
+
+
+if __name__ == "__main__":
+    while True:
+        main()
+        print("Sleeping for {} hour(s)...".format(sleep_time / 60 / 60)
+        sleep(sleep_time)
