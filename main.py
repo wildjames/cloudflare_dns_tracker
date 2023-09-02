@@ -30,10 +30,13 @@ def notify( body):
     # Construct the email contents
     contents = [body]
 
-    # Send with yagmail
-    client = yag.SMTP(gmail_user, gmail_pass)
-    client.send(gmail_send_to, subject, contents)
-    print("Email sent!")
+    try:
+        # Send with yagmail
+        client = yag.SMTP(gmail_user, gmail_pass)
+        client.send(gmail_send_to, subject, contents)
+        print("Email sent!")
+    except:
+        print("Failed to send email! Are your credentials set?")
 
     return
 
