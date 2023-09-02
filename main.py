@@ -123,5 +123,5 @@ def main():
 if __name__ == "__main__":
     while True:
         main()
-        print("Sleeping for {} hour(s)...".format(sleep_time / 60 / 60)
+        print("Sleeping for {} hour(s)...".format(sleep_time / 60 / 60))
         sleep(sleep_time)
