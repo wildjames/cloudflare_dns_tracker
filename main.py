@@ -1,9 +1,12 @@
-from pprint import pformat, pprint
+from pprint import pformat
 
 import yagmail as yag
 import requests
 import os
 from time import sleep
+
+from logging import getLogger
+logger = getLogger(__name__)
 
 whatismyip_url = "https://api.ipify.org?format=json"
 sleep_time = 60 * 60 * 1 # seconds
@@ -23,7 +26,7 @@ def notify( body):
       body: str
         The main text of the email
     '''
-    print("I fucked up setting the new IP address. Sending an alert email")
+    logger.info("I fucked up setting the new IP address. Sending an alert email")
 
     subject = "ERROR IN UPDATING CLOUDFLARE CREDENTIALS"
 
@@ -34,9 +37,9 @@ def notify( body):
         # Send with yagmail
         client = yag.SMTP(gmail_user, gmail_pass)
         client.send(gmail_send_to, subject, contents)
-        print("Email sent!")
+        logger.info("Email sent!")
     except:
-        print("Failed to send email! Are your credentials set?")
+        logger.info("Failed to send email! Are your credentials set?")
 
     return
 
@@ -45,7 +48,7 @@ def main():
     payload = response.json()
     my_IP = payload['ip']
 
-    print("My IP is {}\n\n".format(my_IP))
+    logger.info("My IP is {}\n\n".format(my_IP))
 
     # Documentation: https://api.cloudflare.com/
     cloudflare_endpoint = "https://api.cloudflare.com/client/v4"
@@ -59,17 +62,17 @@ def main():
     # Test communicating with the server
     verify_endpoint = cloudflare_endpoint + "/user/tokens/verify"
     response = requests.get(verify_endpoint, headers=headers)
-    print("GETting with these headers:")
-    pprint(headers)
-    print("Recieved this response:")
-    pprint(response)
-    pprint(response.json())
+    logger.info("GETting with these headers:")
+    logger.info(pformat(headers))
+    logger.info("Recieved this response:")
+    logger.info(pformat(response))
+    logger.info(pformat(response.json()))
 
     payload = response.json()
     if payload['success']:
-        print("\nSuccess!\n\n")
+        logger.info("\nSuccess!\n\n")
     else:
-        print("Verification FAILED!!")
+        logger.info("Verification FAILED!!")
         exit()
 
 
@@ -91,25 +94,25 @@ def main():
     update_dns_endpoint = dns_endpoint + "/{}"
 
     # Humans are bad at reading raw data. Make it nice for the poor things.
-    print("DNS Records:")
+    logger.info("DNS Records:")
     try:
         records = payload['result']
     except KeyError:
-        print("Payload doesn't have the result key! Here's a dump:")
-        print(payload)
+        logger.info("Payload doesn't have the result key! Here's a dump:")
+        logger.info(pformat(payload))
     for record in records:
-        print("Record:")
-        print("    ID:       {}".format(record['id']))
-        print("    Name:     {}".format(record['name']))
-        print("    Type:     {}".format(record['type']))
-        print("    Content:  {}".format(record['content']))
-        print("    Proxied?  {}".format(record['proxied']))
-        print("\n")
+        logger.info("Record:")
+        logger.info("    ID:       {}".format(record['id']))
+        logger.info("    Name:     {}".format(record['name']))
+        logger.info("    Type:     {}".format(record['type']))
+        logger.info("    Content:  {}".format(record['content']))
+        logger.info("    Proxied?  {}".format(record['proxied']))
+        logger.info("\n")
 
         if record['type'] in types_to_update:
-            print("--> I need to alter this record to point to {}".format(my_IP))
+            logger.info("--> I need to alter this record to point to {}".format(my_IP))
             update_dns_endpoint = dns_endpoint + "/{}".format(record['id'])
-            print(update_dns_endpoint)
+            logger.info(pformat(update_dns_endpoint))
 
             package = {
                 "type": record['type'],
@@ -118,8 +121,8 @@ def main():
                 "ttl": 1,
                 "proxied": record['proxied']
             }
-            print("\nData is now:")
-            pprint(package)
+            logger.info("\nData is now:")
+            logger.info(pformat(package))
 
             # PUT the data
             put_resp = requests.put(
@@ -128,22 +131,22 @@ def main():
                 headers=headers,
             )
 
-            print("\nResponses:")
-            print(put_resp)
+            logger.info("\nResponses:")
+            logger.info(pformat(put_resp))
             put_payload = put_resp.json()
-            pprint(put_payload)
+            logger.info(pformat(put_payload))
             if not put_payload['success']:
-                print("Failed to update the record!!! I'll send an email.")
+                logger.info("Failed to update the record!!! I'll send an email.")
 
                 body = pformat(put_payload)
 
                 notify(body)
 
-        print("\n=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n")
+        logger.info("\n=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n")
 
 
 if __name__ == "__main__":
     while True:
         main()
-        print("Sleeping for {} hour(s)...".format(sleep_time / 60 / 60))
+        logger.info("Sleeping for {} hour(s)...".format(sleep_time / 60 / 60))
         sleep(sleep_time)
